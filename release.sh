@@ -19,8 +19,9 @@ lrelease stacer/stacer.pro
 mkdir $RELEASE/$DIR/stacer/translations
 mv translations/*.qm $RELEASE/$DIR/stacer/translations
 
-# linuxdeployqt
-wget -cO lqt "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+# linuxdeployqt, the release asset is named after the architecture
+ARCH=$(uname -m)
+wget -cO lqt "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-$ARCH.AppImage"
 chmod +x lqt
 unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
 ./lqt $RELEASE/$DIR/stacer/stacer -bundle-non-qt-libs -no-translations -unsupported-allow-new-glibc

@@ -81,12 +81,13 @@ void DashboardPage::checkUpdate()
         {
             const QString requestResult= reply->readAll();
             const QJsonDocument result = QJsonDocument::fromJson(requestResult.toUtf8());
-            const QRegExp ex("([0-9].[0-9].[0-9])");
-            ex.indexIn(result.object().value("tag_name").toString());
+            const QRegularExpression ex("([0-9].[0-9].[0-9])");
+            const QRegularExpressionMatch versionMatch =
+                ex.match(result.object().value("tag_name").toString());
 
-            if (ex.matchedLength() > 0)
+            if (versionMatch.hasMatch())
             {
-                const QString version = ex.cap();
+                const QString version = versionMatch.captured();
 
                 if (qApp->applicationVersion() != version) {
                     emit sigShowUpdateBar();

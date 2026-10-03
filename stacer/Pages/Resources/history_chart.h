@@ -42,7 +42,13 @@ private:
     QChart *mChart;
     QVector<QSplineSeries *> mSeriesList;
 
+    // The axis currently displayed on the Y side: the category axis when one was
+    // supplied, otherwise the default value axis created by createDefaultAxes().
+    QAbstractAxis *currentAxisY() const { return mAxisY ? mAxisY : mValueAxisY; }
+
     QCategoryAxis *mAxisY;
+    QValueAxis *mValueAxisX;
+    QValueAxis *mValueAxisY;
 };
 
 #endif // HISTORYCHART_H

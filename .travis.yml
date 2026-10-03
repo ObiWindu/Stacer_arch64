@@ -1,17 +1,19 @@
 language: cpp
 compiler: clang
 sudo: require
-dist: trusty
-before_install:
-- sudo add-apt-repository ppa:beineri/opt-qt591-trusty -y
-- sudo apt-get update -qq
-install:
-- sudo apt-get -y -qq install cmake
-- sudo apt-get -y -qq install libgl1-mesa-dev qt59base qt59imageformats qt59svg qt59charts-no-lgpl qt59tools
-- source /opt/qt*/bin/qt*-env.sh
+dist: jammy
+addons:
+  apt:
+    packages:
+      - cmake
+      - libgl1-mesa-dev
+      - qt6-base-dev
+      - qt6-tools-dev
+      - libqt6charts-dev
+      - libqt6svg-dev
 before_script:
 - mkdir build && cd build
-- cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=$QTDIR/bin ..
+- cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_CXX_COMPILER=clang++ ..
 script:
 - make -j $(nproc)
 - lupdate ../stacer/stacer.pro -no-obsolete

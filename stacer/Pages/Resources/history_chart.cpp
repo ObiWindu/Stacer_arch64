@@ -12,7 +12,10 @@ HistoryChart::HistoryChart(const QString &title, const int &seriesCount, QCatego
     mTitle(title),
     mSeriesCount(seriesCount),
     mChartView(new QChartView(this)),
-    mChart(mChartView->chart())
+    mChart(mChartView->chart()),
+    mAxisY(nullptr),
+    mValueAxisX(nullptr),
+    mValueAxisY(nullptr)
 {
     ui->setupUi(this);
 
@@ -21,8 +24,13 @@ HistoryChart::HistoryChart(const QString &title, const int &seriesCount, QCatego
     if (categoriAxisY) {
         mAxisY = categoriAxisY;
         mAxisY->setLabelsPosition(QCategoryAxis::AxisLabelsPositionOnValue);
+        mChart->addAxis(mAxisY, Qt::AlignLeft);
         for (int i = 0; i < seriesCount; ++i) {
-            mChart->setAxisY(mAxisY, mSeriesList.at(i));
+            // the category axis takes over the Y side from the default value axis
+            if (mValueAxisY)
+                mSeriesList.at(i)->detachAxis(mValueAxisY);
+
+            mSeriesList.at(i)->attachAxis(mAxisY);
         }
     }
 }
@@ -53,8 +61,23 @@ void HistoryChart::init()
     // Chart Settings
     mChart->createDefaultAxes();
 
-    mChart->axisX()->setRange(0, 60);
-    mChart->axisX()->setReverse(true);
+    // QChart::axisX()/axisY() were removed in Qt6, so keep hold of the axes that
+    // createDefaultAxes() attached to the series.
+    if (!mSeriesList.isEmpty()) {
+        for (QAbstractAxis *axis : mSeriesList.first()->attachedAxes()) {
+            if (auto *valueAxis = qobject_cast<QValueAxis *>(axis)) {
+                if (axis->alignment() == Qt::AlignBottom)
+                    mValueAxisX = valueAxis;
+                else if (axis->alignment() == Qt::AlignLeft)
+                    mValueAxisY = valueAxis;
+            }
+        }
+    }
+
+    if (mValueAxisX) {
+        mValueAxisX->setRange(0, 60);
+        mValueAxisX->setReverse(true);
+    }
 
     mChart->setContentsMargins(-11, -11, -11, -11);
     mChart->setMargins(QMargins(20, 0, 10, 10));
@@ -66,11 +89,15 @@ void HistoryChart::init()
         QString chartGridColor = AppManager::ins()->getStyleValues()->value("@chartGridColor").toString();
         QString historyChartBackground = AppManager::ins()->getStyleValues()->value("@historyChartBackgroundColor").toString();
 
-        mChart->axisX()->setLabelsColor(chartLabelColor);
-        mChart->axisX()->setGridLineColor(chartGridColor);
+        if (mValueAxisX) {
+            mValueAxisX->setLabelsColor(chartLabelColor);
+            mValueAxisX->setGridLineColor(chartGridColor);
+        }
 
-        mChart->axisY()->setLabelsColor(chartLabelColor);
-        mChart->axisY()->setGridLineColor(chartGridColor);
+        if (QAbstractAxis *axisY = currentAxisY()) {
+            axisY->setLabelsColor(chartLabelColor);
+            axisY->setGridLineColor(chartGridColor);
+        }
 
         mChart->setBackgroundBrush(QColor(historyChartBackground));
         mChart->legend()->setLabelColor(chartLabelColor);
@@ -79,7 +106,8 @@ void HistoryChart::init()
 
 void HistoryChart::setYMax(const int &value)
 {
-    mChart->axisY()->setRange(0, value);
+    if (QAbstractAxis *axisY = currentAxisY())
+        axisY->setRange(0, value);
 }
 
 QCategoryAxis *HistoryChart::getAxisY()

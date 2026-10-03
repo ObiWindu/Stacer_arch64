@@ -1,12 +1,10 @@
 
-QT       += core gui charts svg concurrent
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui widgets charts svg concurrent
 
 TARGET = stacer
 TEMPLATE = app
 
-CONFIG += c++11
+CONFIG += c++17
 
 QMAKE_CXXFLAGS += -O2
 

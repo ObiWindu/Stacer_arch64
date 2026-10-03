@@ -68,7 +68,7 @@ void SettingsPage::init()
     QFile startupAppFile(mStartupAppPath);
     if (startupAppFile.exists()) {
         QStringList appContent = FileUtil::readListFromFile(mStartupAppPath);
-        QString isHidden = Utilities::getDesktopValue(QRegExp("^Hidden=.*"), appContent).toLower();
+        QString isHidden = Utilities::getDesktopValue(QRegularExpression("^Hidden=.*"), appContent).toLower();
         ui->checkAutostart->setChecked(isHidden == "false");
     } else {
         ui->checkAutostart->setChecked(false);
@@ -102,7 +102,7 @@ void SettingsPage::init()
     connect(ui->cmbLanguages, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbLanguagesChanged(int)));
 //    connect(ui->cmbThemes, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbThemesChanged(int)));
     connect(ui->cmbDisks, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbDiskChanged(int)));
-    connect(ui->cmbStartPage, SIGNAL(currentIndexChanged(QString)), this, SLOT(cmbStartPageChanged(QString)));
+    connect(ui->cmbStartPage, &QComboBox::currentTextChanged, this, &SettingsPage::cmbStartPageChanged);
 }
 
 void SettingsPage::cmbLanguagesChanged(const int &index)

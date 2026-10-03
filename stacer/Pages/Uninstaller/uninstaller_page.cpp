@@ -2,6 +2,8 @@
 #include "ui_uninstallerpage.h"
 #include <QMovie>
 #include "utilities.h"
+#include <QPointer>
+#include <QThreadPool>
 
 UninstallerPage::~UninstallerPage()
 {
@@ -31,8 +33,16 @@ void UninstallerPage::init()
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages, ui->btnSnapPackages };
     Utilities::addDropShadow(widgets, 40);
 
-    QtConcurrent::run(this, &UninstallerPage::loadPackages);
-    QtConcurrent::run(this, &UninstallerPage::loadSnapPackages);
+    // QPointer guards keep the tasks from outliving the page, like the
+    // Qt5 QtConcurrent::run(context, ...) overload used to.
+    const QPointer<UninstallerPage> packagesGuard(this);
+    QThreadPool::globalInstance()->start([packagesGuard] {
+        if (packagesGuard) packagesGuard->loadPackages();
+    });
+    const QPointer<UninstallerPage> snapGuard(this);
+    QThreadPool::globalInstance()->start([snapGuard] {
+        if (snapGuard) snapGuard->loadSnapPackages();
+    });
 
     connect(SignalMapper::ins(), &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
     connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, &UninstallerPage::loadPackages);
@@ -140,7 +150,7 @@ void UninstallerPage::on_btnUninstall_clicked()
     QStringList selectedSnapPackages = getSelectedSnapPackages();
 
     if (!selectedPackages.isEmpty() || !selectedSnapPackages.isEmpty()) {
-        QtConcurrent::run([=]
+        QThreadPool::globalInstance()->start([=]
         {
             emit SignalMapper::ins()->sigUninstallStarted();
 

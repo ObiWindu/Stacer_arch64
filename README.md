@@ -61,7 +61,7 @@
 
 ### Debian x64
 
-1. Download `stacer_1.1.0_amd64.deb` from the [Stacer releases page](https://github.com/oguzhaninan/Stacer/releases).
+1. Download `stacer_1.1.0_amd64.deb` (or `stacer_1.1.0_arm64.deb` on aarch64) from the [Stacer releases page](https://github.com/oguzhaninan/Stacer/releases).
 2. Run `sudo dpkg -i stacer*.deb` on the downloaded package.
 3. Launch Stacer using the installed `stacer` command.
 
@@ -70,13 +70,34 @@
 1. Run as root `apt install stacer`
 
 ### Fedora
-1. Download `stacer_1.1.0_amd64.rpm` from the [Stacer releases page](https://github.com/oguzhaninan/Stacer/releases).
+1. Download `stacer_1.1.0_amd64.rpm` (or `stacer_1.1.0_arm64.rpm` on aarch64) from the [Stacer releases page](https://github.com/oguzhaninan/Stacer/releases).
 2. Run `sudo rpm --install stacer*.rpm --nodeps --force` on the downloaded package.
 3. Launch Stacer using the installed `stacer` command.
 
 ### Fedora (with DNF)
 1. Run: `sudo dnf install stacer`
 2. Launch Stacer using the installed `stacer` command.
+
+### Fedora aarch64 / arm64 (install script)
+
+If there is no package for your machine, build and install from this source
+tree with the bundled installer. It configures CMake, builds with all available
+cores and installs the binary, the desktop entry and the icon.
+
+1. Clone the repository: `git clone https://github.com/oguzhaninan/Stacer.git`
+2. Install and run: `cd Stacer && bash install.sh --deps`
+
+Options:
+
+| Option | Description |
+| --- | --- |
+| `--deps` | Install the Fedora build dependencies with `dnf` first |
+| `--user` | Install into `~/.local` instead of `/usr/local` (no sudo) |
+| `--prefix <dir>` | Install into an arbitrary directory |
+| `--debug` | Build with debug symbols instead of `Release` |
+| `--jobs <n>` | Number of parallel build jobs |
+| `--clean` | Remove the build directory before building |
+| `-h`, `--help` | Show the usage summary |
 
 ## Build from source with CMake (Qt Version Qt 5.x)
 1. `mkdir build && cd build`

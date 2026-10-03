@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(stacer)
 
 set(MANAGERS_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/Managers")
@@ -25,8 +25,19 @@ file(GLOB_RECURSE ${PROJECT_NAME}_srcs         "${CMAKE_CURRENT_SOURCE_DIR}/**.c
 file(GLOB_RECURSE ${PROJECT_NAME}_translations "${PROJECT_ROOT}/translations/**.ts")
 
 # Translations
-find_package(Qt5LinguistTools)
-qt5_create_translation(QM_FILES  ${PROJECT_NAME}_translations  ${${PROJECT_NAME}_srcs})
+# The .ts files must be passed expanded, not as the name of the variable holding
+# them: the LinguistTools macros classify each argument by file extension, so a
+# bare variable name would look like a source file and no .qm files would be
+# produced. qt6_add_translation() only compiles the .ts files; qt6_create_translation()
+# would additionally run lupdate and rewrite the sources on every build.
+# This subproject can also be configured on its own, in which case the version
+# floor set by the top-level project is not inherited.
+if(NOT QT6_MIN_VERSION)
+    set(QT6_MIN_VERSION 6.5)
+endif()
+
+find_package(Qt6 ${QT6_MIN_VERSION} REQUIRED COMPONENTS LinguistTools)
+qt6_add_translation(QM_FILES  ${${PROJECT_NAME}_translations})
 set_directory_properties(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES  "${QM_FILES}")
 
 set(CMAKE_AUTOUIC ON)
@@ -39,7 +50,7 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-  stacer-core  Qt5::Core  Qt5::Gui  Qt5::Widgets  Qt5::Charts  Qt5::Svg  Qt5::Concurrent
+  stacer-core  Qt6::Core  Qt6::Gui  Qt6::Widgets  Qt6::Charts  Qt6::Svg  Qt6::Concurrent
 )
 
 # Running LTO in Release builds, if the C++ compiler is GNU GCC

@@ -1,39 +1,37 @@
 #include "system_info.h"
 
 #include <QObject>
+#include <QRegularExpression>
 #include <iostream>
 
 SystemInfo::SystemInfo()
 {
     QString unknown(QObject::tr("Unknown"));
-    QString model = nullptr;
-    QString speed = nullptr;
 
     try{
-        QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');  //run command in English language (guaratee same behaviour across languages)
+        // run the command in English language (guarantee same behaviour across languages)
+        const QStringList lines = CpuInfo::lscpuLines();
 
-        QRegExp regexp("\\s+");
-        QString space(" ");
+        const QRegularExpression regexp("\\s+");
+        const QString space(" ");
 
-        auto filterModel = lines.filter(QRegExp("^Model name"));
-        QString modelLine = filterModel.isEmpty() ? "error missing model:error missing model" : filterModel.first();
-        auto filterSpeed = lines.filter(QRegExp("^CPU max MHz"));
-        QString speedLine = "error:0.0";
-        if (filterSpeed.isEmpty())
-        {
-            // fallback to CPU MHz
-            filterSpeed = lines.filter(QRegExp("^CPU MHz"));
-            speedLine = filterSpeed.isEmpty() ? speedLine : filterSpeed.first();
+        // x86 reports "Model name", aarch64 only reports "Model"
+        QString model = CpuInfo::cpuModelName(lines);
+
+        double clock = 0.0;
+        // aarch64 only reports the range the cpu policy scales between,
+        // on x86 "CPU MHz" holds the current clock of every core.
+        for (const QString &key : QStringList{"CPU max MHz", "CPU MHz"}) {
+            clock = CpuInfo::parseFrequency(CpuInfo::lscpuValue(lines, key));
+            if (clock > 0) break;
         }
 
-        model = modelLine.split(":").last();
-        speed = speedLine.split(":").last();
-
         model = model.contains('@') ? model.split("@").first() : model; // intel : AMD
-        speed = QString::number(speed.toDouble()/1000.0) + "GHz";
 
-        this->cpuModel = model.trimmed().replace(regexp, space);
-        this->cpuSpeed = speed.trimmed().replace(regexp, space);
+        this->cpuModel = model.isEmpty() ? unknown : model.trimmed().replace(regexp, space);
+        this->cpuSpeed = clock > 0
+                ? QString::number(clock/1000.0) + "GHz"
+                : unknown;
     } catch(QString &ex) {
         this->cpuModel = unknown;
         this->cpuSpeed = unknown;

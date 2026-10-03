@@ -36,17 +36,20 @@ QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data)
     // 10 minutes
     process->waitForFinished(600*1000);
 
-    QTextStream stdOut(process->readAllStandardOutput());
+    const QByteArray out = process->readAllStandardOutput();
 
-    QString err = process->errorString();
+    // Read the result state before tearing the process down, otherwise the
+    // error is lost once the channels are closed.
+    const QProcess::ProcessError error = process->error();
+    const QString err = process->errorString();
 
     process->kill();
     process->close();
 
-    if (process->error() != QProcess::UnknownError)
+    if (error != QProcess::UnknownError)
         throw err;
 
-    return stdOut.readAll().trimmed();
+    return QString::fromUtf8(out).trimmed();
 }
 
 bool CommandUtil::isExecutable(const QString &cmd)
