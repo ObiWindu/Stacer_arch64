@@ -2,6 +2,8 @@
 #include "ui_search_page.h"
 #include <qdebug.h>
 #include <QClipboard>
+#include <QPointer>
+#include <QThreadPool>
 
 SearchPage::SearchPage(QWidget *parent) :
     QWidget(parent),
@@ -172,7 +174,12 @@ void SearchPage::on_btnAdvancePaneToggle_clicked()
 
 void SearchPage::on_btnSearchAdvance_clicked()
 {
-    QtConcurrent::run(this, &SearchPage::searching);
+    // QPointer guard keeps the task from outliving the page, like the
+    // Qt5 QtConcurrent::run(context, ...) overload used to.
+    const QPointer<SearchPage> guard(this);
+    QThreadPool::globalInstance()->start([guard] {
+        if (guard) guard->searching();
+    });
     ui->advanceSearchPane->hide();
 }
 
@@ -323,9 +330,9 @@ QList<QStandardItem*> SearchPage::createRow(const QString &filepath)
     i_group->setData(fileInfo->group(), rowRole);
     i_group->setData(fileInfo->group(), Qt::ToolTipRole);
 
-    QStandardItem *i_creationTime = new QStandardItem(fileInfo->created().toString(mSearchResultDateFormat));
-    i_creationTime->setData(fileInfo->created().toString(mSearchResultDateFormat), rowRole);
-    i_creationTime->setData(fileInfo->created().toString(mSearchResultDateFormat), Qt::ToolTipRole);
+    QStandardItem *i_creationTime = new QStandardItem(fileInfo->birthTime().toString(mSearchResultDateFormat));
+    i_creationTime->setData(fileInfo->birthTime().toString(mSearchResultDateFormat), rowRole);
+    i_creationTime->setData(fileInfo->birthTime().toString(mSearchResultDateFormat), Qt::ToolTipRole);
 
     QStandardItem *i_lastAccess = new QStandardItem(fileInfo->lastRead().toString(mSearchResultDateFormat));
     i_lastAccess->setData(fileInfo->lastRead().toString(mSearchResultDateFormat), rowRole);

@@ -35,7 +35,7 @@ bool FileUtil::writeFile(const QString &path, const QString &content, const QIOD
     if(file.open(mode))
     {
         QTextStream stream(&file);
-        stream << content.toUtf8() << endl;
+        stream << content << Qt::endl;
 
         file.close();
 

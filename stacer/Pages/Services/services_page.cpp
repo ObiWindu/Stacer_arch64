@@ -4,6 +4,8 @@
 
 #include "utilities.h"
 #include <QtConcurrent>
+#include <QPointer>
+#include <QThreadPool>
 
 ServicesPage::~ServicesPage()
 {
@@ -22,7 +24,13 @@ ServicesPage::ServicesPage(QWidget *parent) :
 void ServicesPage::init()
 {
     connect(this, &ServicesPage::loadServicesS, this, &ServicesPage::loadServices);
-    QtConcurrent::run(this, &ServicesPage::getServices);
+
+    // QPointer guard keeps the task from outliving the page, like the
+    // Qt5 QtConcurrent::run(context, ...) overload used to.
+    const QPointer<ServicesPage> guard(this);
+    QThreadPool::globalInstance()->start([guard] {
+        if (guard) guard->getServices();
+    });
 
     ui->cmbRunningStatus->addItems({ tr("Running Status"), tr("Running"), tr("Not Running") });
     ui->cmbStartupStatus->addItems({ tr("Startup Status"), tr("Enabled"), tr("Disabled") });

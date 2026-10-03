@@ -1,6 +1,8 @@
 ﻿#include "system_cleaner_page.h"
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
+#include <QPointer>
+#include <QThreadPool>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -302,12 +304,18 @@ void SystemCleanerPage::systemClean()
 
 void SystemCleanerPage::on_btnScan_clicked()
 {
-    QtConcurrent::run(this, &SystemCleanerPage::systemScan);
+    const QPointer<SystemCleanerPage> guard(this);
+    QThreadPool::globalInstance()->start([guard] {
+        if (guard) guard->systemScan();
+    });
 }
 
 void SystemCleanerPage::on_btnClean_clicked()
 {
-    QtConcurrent::run(this, &SystemCleanerPage::systemClean);
+    const QPointer<SystemCleanerPage> guard(this);
+    QThreadPool::globalInstance()->start([guard] {
+        if (guard) guard->systemClean();
+    });
 }
 
 void SystemCleanerPage::on_btnBackToCategories_clicked()

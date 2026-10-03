@@ -11,9 +11,9 @@ void ByteTreeWidget::setValues(const QString &text, const quint64 &size, const Q
 bool ByteTreeWidget::operator<(const QTreeWidgetItem &other) const
 {
     int column = treeWidget()->sortColumn();
-    // sort by bytes
+    // sort by bytes (the size is stored as a quint64 in the item data)
     if(column == 1) {
-        return this->data(1, 0x0100) < other.data(1, 0x0100);
+        return this->data(1, 0x0100).toULongLong() < other.data(1, 0x0100).toULongLong();
     }
     // default sorting
     return text(column).toLower() < other.text(column).toLower();
